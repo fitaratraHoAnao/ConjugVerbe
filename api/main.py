@@ -4,34 +4,37 @@ from bs4 import BeautifulSoup
 
 app = Flask(__name__)
 
-@app.route('/conjuguer/<verbe>', methods=['GET'])
-def conjuguer(verbe):
-    # URL du verbe à conjuguer
-    url = f'https://leconjugueur.lefigaro.fr/php5/index.php?verbe={verbe}'
-
-    # Envoyer une requête GET à la page
+# Fonction pour scraper les articles du flux RSS
+def scrape_bbc_news():
+    url = "http://feeds.bbci.co.uk/news/rss.xml"
     response = requests.get(url)
 
-    # Vérifier que la requête est réussie
+    # Vérifier si la requête a réussi (status code 200)
     if response.status_code == 200:
-        # Parser le contenu HTML avec BeautifulSoup
-        soup = BeautifulSoup(response.content, 'html.parser')
+        soup = BeautifulSoup(response.text, "xml")
+        items = soup.findAll('item')
 
-        # Extraire la section de conjugaison
-        conjugaison_section = soup.find_all('div', class_='temps')
-        conjugaison_data = {}
+        # Liste pour stocker les articles
+        news_items = []
+        for i in items:
+            news_i = {
+                'title': i.title.text if i.title else 'No title',
+                'description': i.description.text if i.description else 'No description',
+                'link': i.link.text if i.link else 'No link',
+                'pubDate': i.pubDate.text if i.pubDate else 'No date'
+            }
+            news_items.append(news_i)
 
-        # Boucler sur chaque section pour récupérer les conjugaisons
-        for section in conjugaison_section:
-            temps = section.find('h3').get_text(strip=True)
-            conjugaison = [li.get_text(strip=True) for li in section.find_all('li')]
-            conjugaison_data[temps] = conjugaison
-
-        # Retourner les conjugaisons sous forme de JSON
-        return jsonify(conjugaison_data)
+        return news_items
     else:
-        return jsonify({'error': 'Impossible de récupérer la conjugaison'}), 500
+        return []
 
-if __name__ == '__main__':
+# Route principale pour afficher les articles en JSON
+@app.route('/news', methods=['GET'])
+def get_news():
+    news = scrape_bbc_news()
+    return jsonify(news)
+
+if __name__ == "__main__":
+    # Démarrer l'application Flask sur l'adresse 0.0.0.0 et le port 5000
     app.run(host='0.0.0.0', port=5000)
-            
