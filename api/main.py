@@ -11,18 +11,22 @@ def scrape_bbc_news():
 
     # Vérifier si la requête a réussi (status code 200)
     if response.status_code == 200:
-        # Utiliser lxml comme parser XML
         soup = BeautifulSoup(response.text, "lxml")
         items = soup.findAll('item')
 
         # Liste pour stocker les articles
         news_items = []
         for i in items:
+            title = i.find('title')
+            description = i.find('description')
+            link = i.find('link')
+            pubDate = i.find('pubDate')
+
             news_i = {
-                'title': i.title.text if i.title else 'No title',
-                'description': i.description.text if i.description else 'No description',
-                'link': i.link.text if i.link else 'No link',
-                'pubDate': i.pubDate.text if i.pubDate else 'No date'
+                'title': title.text.strip() if title else 'No title',
+                'description': description.text.strip() if description else 'No description',
+                'link': link.text.strip() if link else 'No link',
+                'pubDate': pubDate.text.strip() if pubDate else 'No date'
             }
             news_items.append(news_i)
 
@@ -38,3 +42,4 @@ def get_news():
 
 if __name__ == "__main__":
     app.run(host='0.0.0.0', port=5000)
+            
