@@ -11,7 +11,8 @@ def scrape_bbc_news():
 
     # Vérifier si la requête a réussi (status code 200)
     if response.status_code == 200:
-        soup = BeautifulSoup(response.text, "xml")
+        # Utiliser lxml comme parser XML
+        soup = BeautifulSoup(response.text, "lxml")
         items = soup.findAll('item')
 
         # Liste pour stocker les articles
@@ -36,5 +37,4 @@ def get_news():
     return jsonify(news)
 
 if __name__ == "__main__":
-    # Démarrer l'application Flask sur l'adresse 0.0.0.0 et le port 5000
     app.run(host='0.0.0.0', port=5000)
