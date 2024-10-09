@@ -4,41 +4,33 @@ from bs4 import BeautifulSoup
 
 app = Flask(__name__)
 
-# Fonction pour scraper les articles du flux RSS
-def scrape_bbc_news():
-    url = "http://feeds.bbci.co.uk/news/rss.xml"
+# Route pour scraper des livres
+@app.route('/book', methods=['GET'])
+def scrape_books():
+    # URL du site à scraper (Books to Scrape)
+    url = 'https://books.toscrape.com/'
+
+    # Faire une requête GET pour récupérer le contenu de la page
     response = requests.get(url)
 
-    # Vérifier si la requête a réussi (status code 200)
+    # Vérifier si la requête est réussie (200 OK)
     if response.status_code == 200:
-        soup = BeautifulSoup(response.text, "lxml")
-        items = soup.findAll('item')
+        # Analyser le HTML avec BeautifulSoup
+        soup = BeautifulSoup(response.content, 'html.parser')
 
-        # Liste pour stocker les articles
-        news_items = []
-        for i in items:
-            title = i.find('title')
-            description = i.find('description')
-            link = i.find('link')
-            pubDate = i.find('pubDate')
+        # Extraire les titres et les prix des livres
+        books = soup.find_all('article', class_='product_pod')
+        books_data = []
+        for book in books:
+            title = book.h3.a['title']  # Titre du livre
+            price = book.find('p', class_='price_color').get_text()  # Prix du livre
+            books_data.append({'title': title, 'price': price})
 
-            news_i = {
-                'title': title.text.strip() if title else 'No title',
-                'description': description.text.strip() if description else 'No description',
-                'link': link.text.strip() if link else 'No link',
-                'pubDate': pubDate.text.strip() if pubDate else 'No date'
-            }
-            news_items.append(news_i)
-
-        return news_items
+        # Retourner les données en format JSON
+        return jsonify(books_data)
     else:
-        return []
+        return jsonify({"error": f"Échec de la requête, code de réponse : {response.status_code}"}), 500
 
-# Route principale pour afficher les articles en JSON
-@app.route('/news', methods=['GET'])
-def get_news():
-    news = scrape_bbc_news()
-    return jsonify(news)
-
-if __name__ == "__main__":
-    app.run(host='0.0.0.0', port=5000)
+# Lancer l'application sur le port 0000
+if __name__ == '__main__':
+    app.run(host='0.0.0.0', port=0000)
